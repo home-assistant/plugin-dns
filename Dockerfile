@@ -33,7 +33,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 
 FROM ${BUILD_FROM}
 
-WORKDIR /data
+WORKDIR /config
 COPY --from=builder /workspace/coredns_binary /usr/bin/coredns
 
-RUN ["coredns", "-conf", "/config/corefile"]
+CMD ["coredns", "-conf", "/config/corefile"]
