@@ -45,7 +45,7 @@ jobs:
       sudo docker run --rm --privileged \
         -v ~/.docker:/root/.docker \
         -v /run/docker.sock:/run/docker.sock:rw -v $(pwd):/data:ro \
-        homeassistant/amd64-builder:$(versionBuilder) --hassio-cli dev \
+        homeassistant/amd64-builder:$(versionBuilder) --hassio-dns dev \
         --all -t /data --docker-hub homeassistant
     displayName: 'Build DEV'
 
@@ -65,6 +65,6 @@ jobs:
         -v ~/.docker:/root/.docker \
         -v /run/docker.sock:/run/docker.sock:rw -v $(pwd):/data:ro \
         homeassistant/amd64-builder:$(versionBuilder) \
-        --hassio-cli $(Build.SourceBranchName) \
+        --hassio-dns $(Build.SourceBranchName) \
         --all -t /data --docker-hub homeassistant
     displayName: 'Build Release'
