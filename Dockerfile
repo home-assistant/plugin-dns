@@ -3,7 +3,7 @@ ARG BUILD_FROM
 FROM golang:1.12.7 AS builder
 
 WORKDIR /workspace
-ARG BUILD_ARG
+ARG BUILD_ARCH
 ARG COREDNS_VERSION=v1.6.1
 
 # Build
@@ -14,15 +14,15 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     && git clone --depth 1 -b ${COREDNS_VERSION} https://github.com/coredns/coredns \
     && cd coredns \
     && \
-        if [ "${BUILD_ARG}" = "armhf" ]; then \
+        if [ "${BUILD_ARCH}" = "armhf" ]; then \
             make coredns SYSTEM="GOOS=linux GOARM=6 GOARCH=arm"; \
-        elif [ "${BUILD_ARG}" = "armv7" ]; then \
+        elif [ "${BUILD_ARCH}" = "armv7" ]; then \
             make coredns SYSTEM="GOOS=linux GOARM=7 GOARCH=arm"; \
-        elif [ "${BUILD_ARG}" = "aarch64" ]; then \
+        elif [ "${BUILD_ARCH}" = "aarch64" ]; then \
             make coredns SYSTEM="GOOS=linux GOARCH=arm64"; \
-        elif [ "${BUILD_ARG}" = "i386" ]; then \
+        elif [ "${BUILD_ARCH}" = "i386" ]; then \
             make coredns SYSTEM="GOOS=linux GOARCH=386"; \
-        elif [ "${BUILD_ARG}" = "amd64" ]; then \
+        elif [ "${BUILD_ARCH}" = "amd64" ]; then \
             make coredns SYSTEM="GOOS=linux GOARCH=amd64"; \
         else \
             exit 1; \
