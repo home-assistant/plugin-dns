@@ -24,7 +24,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
             make coredns SYSTEM="GOOS=linux GOARCH=386"; \
         elif [ "${BUILD_ARG}" = "amd64" ]; then \
             make coredns SYSTEM="GOOS=linux GOARCH=amd64"; \
-        else; \
+        else \
             exit 1; \
         fi \
     && cp -f coredns /workspace/coredns_binary \
