@@ -1,19 +1,20 @@
 ARG BUILD_FROM
 
-FROM golang:1.12.7 AS builder
+FROM golang:1.14.1-alpine3.11 AS builder
 
 WORKDIR /workspace
 ARG BUILD_ARCH
 ARG COREDNS_VERSION
 
 # Build
-RUN apt-get update && apt-get install -y --no-install-recommends \
+RUN apk add --no-cache \
         git \
         make \
-    && rm -rf /var/lib/apt/lists/* \
+        bash \
     && git clone --depth 1 -b ${COREDNS_VERSION} https://github.com/coredns/coredns \
     && cd coredns \
     && echo "alternate:github.com/pvizeli/alternate" >> plugin.cfg \
+    && go generate \
     && \
         if [ "${BUILD_ARCH}" = "armhf" ]; then \
             make coredns SYSTEM="GOOS=linux GOARM=6 GOARCH=arm"; \
