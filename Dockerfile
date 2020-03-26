@@ -4,7 +4,7 @@ FROM golang:1.12.7 AS builder
 
 WORKDIR /workspace
 ARG BUILD_ARCH
-ARG COREDNS_VERSION=v1.6.1
+ARG COREDNS_VERSION
 
 # Build
 RUN apt-get update && apt-get install -y --no-install-recommends \
@@ -13,6 +13,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     && rm -rf /var/lib/apt/lists/* \
     && git clone --depth 1 -b ${COREDNS_VERSION} https://github.com/coredns/coredns \
     && cd coredns \
+    && echo "alternate:github.com/coredns/alternate" >> plugin.cfg \
     && \
         if [ "${BUILD_ARCH}" = "armhf" ]; then \
             make coredns SYSTEM="GOOS=linux GOARM=6 GOARCH=arm"; \
@@ -36,4 +37,5 @@ FROM ${BUILD_FROM}
 WORKDIR /config
 COPY --from=builder /workspace/coredns_binary /usr/bin/coredns
 
-CMD ["coredns", "-conf", "/config/corefile"]
+# rootfs
+COPY rootfs /
