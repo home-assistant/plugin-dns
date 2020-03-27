@@ -38,5 +38,4 @@ FROM ${BUILD_FROM}
 WORKDIR /config
 COPY --from=builder /workspace/coredns_binary /usr/bin/coredns
 
-# rootfs
-COPY rootfs /
+CMD ["coredns", "-conf", "/config/corefile"]
