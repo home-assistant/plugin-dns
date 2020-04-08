@@ -13,8 +13,8 @@ RUN apk add --no-cache \
         bash \
     && git clone --depth 1 -b ${COREDNS_VERSION} https://github.com/coredns/coredns \
     && cd coredns \
-    && echo "fallback:github.com/pvizeli/coredns-fallback" >> plugin.cfg \
-    && echo "mdns:github.com/pvizeli/coredns-mdns" >> plugin.cfg \
+    && sed -i "/^forward:.*/a fallback:github.com/pvizeli/coredns-fallback" plugin.cfg \
+    && sed -i "/^hosts:.*/a mdns:github.com/pvizeli/coredns-mdns" plugin.cfg \
     && go generate \
     && \
         if [ "${BUILD_ARCH}" = "armhf" ]; then \
