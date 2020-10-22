@@ -7,7 +7,7 @@ ARG BUILD_ARCH
 ARG COREDNS_VERSION
 
 # Build
-COPY plugins .
+COPY plugins plugins
 RUN apk add --no-cache \
         git \
         make \
