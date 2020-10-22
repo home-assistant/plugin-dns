@@ -10,6 +10,7 @@ trigger:
       - "*"
   paths:
     include:
+    - plugins/*
     - Dockerfile
     - build.json
 pr: none
