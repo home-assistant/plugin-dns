@@ -1,20 +1,22 @@
 ARG BUILD_FROM
 
-FROM golang:1.14.1-alpine3.11 AS builder
+FROM golang:1.14-alpine3.12 AS builder
 
-WORKDIR /workspace
+WORKDIR /usr/src
 ARG BUILD_ARCH
 ARG COREDNS_VERSION
 
 # Build
+COPY plugins .
 RUN apk add --no-cache \
         git \
         make \
         bash \
     && git clone --depth 1 -b ${COREDNS_VERSION} https://github.com/coredns/coredns \
+    && cp -rf plugins/* coredns/plugins/ \
     && cd coredns \
-    && sed -i "/^forward:.*/a fallback:github.com/pvizeli/coredns-fallback" plugin.cfg \
-    && sed -i "/^hosts:.*/a mdns:github.com/pvizeli/coredns-mdns" plugin.cfg \
+    && sed -i "/^forward:.*/a fallback:fallback" plugin.cfg \
+    && sed -i "/^hosts:.*/a mdns:mdns" plugin.cfg \
     && go generate \
     && \
         if [ "${BUILD_ARCH}" = "armhf" ]; then \
@@ -29,14 +31,11 @@ RUN apk add --no-cache \
             make coredns SYSTEM="GOOS=linux GOARCH=amd64"; \
         else \
             exit 1; \
-        fi \
-    && cp -f coredns /workspace/coredns_binary \
-    && rm -rf /workspace/coredns/
-
+        fi
 
 FROM ${BUILD_FROM}
 
 WORKDIR /config
-COPY --from=builder /workspace/coredns_binary /usr/bin/coredns
+COPY --from=builder /usr/src/coredns/coredns /usr/bin/coredns
 
 CMD ["coredns", "-conf", "/config/corefile"]
