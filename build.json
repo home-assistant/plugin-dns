@@ -11,6 +11,6 @@
         "io.hass.type": "dns"
     },
     "args": {
-        "COREDNS_VERSION": "v1.8.0"
+        "COREDNS_VERSION": "1.8.0"
     }
 }

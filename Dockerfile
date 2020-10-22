@@ -12,7 +12,7 @@ RUN apk add --no-cache \
         git \
         make \
         bash \
-    && git clone --depth 1 -b ${COREDNS_VERSION} https://github.com/coredns/coredns \
+    && git clone --depth 1 -b v${COREDNS_VERSION} https://github.com/coredns/coredns \
     && cp -rf plugins/* coredns/plugins/ \
     && cd coredns \
     && sed -i "/^forward:.*/a fallback:fallback" plugin.cfg \
