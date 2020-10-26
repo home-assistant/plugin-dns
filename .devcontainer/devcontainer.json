@@ -3,7 +3,7 @@
 	"build": {
 		"dockerfile": "Dockerfile",
 		"args": {
-			"VARIANT": "1.14",
+			"VARIANT": "1.15",
 			"INSTALL_NODE": "false",
 			"NODE_VERSION": "lts/*"
 		}
@@ -15,7 +15,11 @@
 		"go.useLanguageServer": true,
 		"go.gopath": "/go",
 		"go.goroot": "/usr/local/go",
-		"go.toolsGopath": "/go/bin"
+		"go.toolsGopath": "/go/bin",
+		"go.lintTool":"golangci-lint",
+		"go.lintFlags": [
+			"--fast"
+		]
 	},
 	"extensions": [
 		"golang.Go"
