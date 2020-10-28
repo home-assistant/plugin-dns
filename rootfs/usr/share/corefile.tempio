@@ -10,7 +10,7 @@
         rcode NOERROR
     }
     mdns
-    forward . {{ JoinString .servers " " }} {{ JoinString .locals " " }} dns://127.0.0.1:5553 {
+    forward . {{ JoinString .servers " " }} {{ if len .locals | eq 0 }}dns://127.0.0.11{{ else }}{{ JoinString .locals " " }}{{ end }} dns://127.0.0.1:5553 {
         except local.hass.io
         policy sequential
         health_check 5s
