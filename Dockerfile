@@ -34,28 +34,8 @@ RUN \
             exit 1; \
         fi
 
-# Build Configurator
-COPY configurator configurator
-RUN \
-    && cd configurator \
-    && \
-        if [ "${BUILD_ARCH}" = "armhf" ]; then \
-            CGO_ENABLED=0 GOARM=6 GOARCH=arm go build -ldflags="-s -w"; \
-        elif [ "${BUILD_ARCH}" = "armv7" ]; then \
-            CGO_ENABLED=0 GOARM=7 GOARCH=arm go build -ldflags="-s -w"; \
-        elif [ "${BUILD_ARCH}" = "aarch64" ]; then \
-            CGO_ENABLED=0 GOARCH=arm64 go build -ldflags="-s -w"; \
-        elif [ "${BUILD_ARCH}" = "i386" ]; then \
-            CGO_ENABLED=0 GOARCH=386 go build -ldflags="-s -w"; \
-        elif [ "${BUILD_ARCH}" = "amd64" ]; then \
-            CGO_ENABLED=0 GOARCH=amd64 go build -ldflags="-s -w"; \
-        else \
-            exit 1; \
-        fi
-
-
 FROM ${BUILD_FROM}
 
 WORKDIR /config
-COPY --from=builder /usr/src/coredns/coredns /usr/src/configurator/configurator /usr/bin/
+COPY --from=builder /usr/src/coredns/coredns /usr/bin/coredns
 COPY rootfs /
