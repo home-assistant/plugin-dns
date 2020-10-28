@@ -19,3 +19,5 @@ jobs:
 
       - name: Run linter
         uses: ludeeus/action-shellcheck@1.0.0
+        with:
+          additional_files: 'run finish'
