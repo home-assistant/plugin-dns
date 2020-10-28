@@ -1,5 +1,5 @@
 {
-	"name": "Plugin Observare",
+	"name": "Plugin DNS",
 	"build": {
 		"dockerfile": "Dockerfile",
 		"args": {
