@@ -2,7 +2,7 @@
     log
     errors
     loop
-    {{ if .Debug }}debug{{ end }}
+    {{ if .debug }}debug{{ end }}
     hosts /config/hosts {
         fallthrough
     }
@@ -10,7 +10,7 @@
         rcode NOERROR
     }
     mdns
-    forward . {{ Join .Servers " " }} {{ Join .Locals " " }} dns://127.0.0.1:5553 {
+    forward . {{ JoinString .servers " " }} {{ JoinString .locals " " }} dns://127.0.0.1:5553 {
         except local.hass.io
         policy sequential
         health_check 5s
@@ -24,7 +24,7 @@
 .:5553 {
     log
     errors
-    {{ if .Debug }}debug{{ end }}
+    {{ if .debug }}debug{{ end }}
     forward . tls://1.1.1.1 tls://1.0.0.1 {
         tls_servername cloudflare-dns.com
         except local.hass.io
