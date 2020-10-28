@@ -4,17 +4,18 @@ import (
 	"bytes"
 	"log"
 	"strings"
-	"template"
+	"text/template"
 )
 
 func renderCoreFile(config *CoreDNSConfig, coreFile string) []byte {
 	buf := &bytes.Buffer{}
-	coreTemplate := template.Must(template.ParseFile(coreFile))
 
-	// Add functions
-	coreTemplate.Funcs(template.FuncMap{"Join": strings.Join})
+	// generate template
+	coreTemplate := template.New("corefile").Funcs(template.FuncMap{"Join": strings.Join})
+	template.Must(coreTemplate.ParseFiles(coreFile))
 
-	err := coreTemplate.Execute(buf, config)
+	// render
+	err := coreTemplate.Execute(buf, *config)
 	if err != nil {
 		log.Fatal(err)
 	}

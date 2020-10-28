@@ -24,5 +24,5 @@ func readConfigFile(file string) *CoreDNSConfig {
 		log.Fatal(err)
 	}
 
-	return config
+	return &config
 }
