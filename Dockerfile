@@ -6,9 +6,10 @@ WORKDIR /usr/src
 ARG BUILD_ARCH
 ARG COREDNS_VERSION
 
-# Build
+# Build CoreDNS
 COPY plugins plugins
-RUN apk add --no-cache \
+RUN \
+    apk add --no-cache \
         git \
         make \
         bash \
@@ -37,5 +38,4 @@ FROM ${BUILD_FROM}
 
 WORKDIR /config
 COPY --from=builder /usr/src/coredns/coredns /usr/bin/coredns
-
-CMD ["coredns", "-conf", "/config/corefile"]
+COPY rootfs /
