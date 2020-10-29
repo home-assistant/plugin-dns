@@ -5,7 +5,7 @@
 
 # MIGRATION: can removed later
 if [ ! -f /config/coredns.json ]; then
-    bashio::log.warning "Run old fashion"
+    bashio::log.warning "coredns.json not found, using supervisor configuration"
     cp -f /config/corefile /etc/corefile
 
     bashio::exit.ok
