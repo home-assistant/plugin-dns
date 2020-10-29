@@ -9,7 +9,8 @@ ARG COREDNS_VERSION
 # Build CoreDNS
 COPY plugins plugins
 RUN \
-    apk add --no-cache \
+    set -x \
+    && apk add --no-cache \
         git \
         make \
         bash \
