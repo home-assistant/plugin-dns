@@ -10,6 +10,7 @@ on:
     paths:
     - Dockerfile
     - build.json
+    - 'rootfs/**'
     - 'plugins/**'
 
 env:
