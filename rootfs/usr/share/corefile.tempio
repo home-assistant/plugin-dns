@@ -1,5 +1,7 @@
 .:53 {
-    log
+    log {{ if not .debug }}{
+        class error
+    }{{ end }}
     errors
     loop
     {{ if .debug }}debug{{ end }}
@@ -22,7 +24,9 @@
 }
 
 .:5553 {
-    log
+    log {{ if not .debug }}{
+        class error
+    }{{ end }}
     errors
     {{ if .debug }}debug{{ end }}
     forward . tls://1.1.1.1 tls://1.0.0.1 {
