@@ -19,6 +19,12 @@ RUN \
     && cd coredns \
     && sed -i "/^forward:.*/a fallback:fallback" plugin.cfg \
     && sed -i "/^hosts:.*/a mdns:mdns" plugin.cfg \
+    && sed -i "/route53:route53/d" plugin.cfg \
+    && sed -i "/clouddns:clouddns/d" plugin.cfg \
+    && sed -i "/k8s_external:k8s_external/d" plugin.cfg \
+    && sed -i "/kubernetes:kubernetes/d" plugin.cfg \
+    && sed -i "/etcd:etcd/d" plugin.cfg \
+    && sed -i "/grpc:grpc/d" plugin.cfg \
     && go generate \
     && \
         if [ "${BUILD_ARCH}" = "armhf" ]; then \
