@@ -9,7 +9,8 @@
         "i386": "ghcr.io/home-assistant/i386-base:3.13"
     },
     "labels": {
-        "io.hass.type": "dns"
+        "io.hass.type": "dns",
+        "org.opencontainers.image.source": "https://github.com/home-assistant/plugin-dns"
     },
     "args": {
         "COREDNS_VERSION": "1.8.1"
