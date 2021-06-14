@@ -55,12 +55,10 @@ func (m MDNS) ServeDNS(ctx context.Context, w dns.ResponseWriter, r *dns.Msg) (i
 
 	// Check requirements
 	if !strings.HasSuffix(state.QName(), ".local.") {
-		log.Debugf("Skipping due to query '%s' not '.local'", state.QName())
 		return plugin.NextOrFailure(m.Name(), m.Next, ctx, w, r)
 	}
 
 	if state.QType() != dns.TypeA && state.QType() != dns.TypeAAAA {
-		log.Debugf("Skipping due to unrecognized query type %v", state.QType())
 		return plugin.NextOrFailure(m.Name(), m.Next, ctx, w, r)
 	}
 
