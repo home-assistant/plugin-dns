@@ -19,6 +19,6 @@
         "org.opencontainers.image.licenses": "Apache License 2.0"
     },
     "args": {
-        "COREDNS_VERSION": "1.8.3"
+        "COREDNS_VERSION": "1.8.4"
     }
 }
