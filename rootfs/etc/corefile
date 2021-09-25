@@ -11,21 +11,10 @@
         rcode NOERROR
     }
     mdns
-    forward . dns://172.0.0.11:53 dns://127.0.0.1:5553 {
+    forward . dns://127.0.0.11:53 {
         except local.hass.io
         policy sequential
         health_check 1m
     }
-    cache
-}
-
-.:5553 {
-    log
-    errors
-    forward . tls://1.1.1.1 tls://1.0.0.1 {
-        tls_servername cloudflare-dns.com
-        except local.hass.io
-        health_check 5m
-    }
-    cache
+    cache 600
 }
