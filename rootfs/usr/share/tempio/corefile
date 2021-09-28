@@ -12,15 +12,24 @@
         rcode NOERROR
     }
     mdns
+    {{ if .fallback }}
     forward . {{ join " " .servers }} {{ if len .locals | eq 0 }}dns://127.0.0.11{{ else }}{{ join " " .locals }}{{ end }} dns://127.0.0.1:5553 {
         except local.hass.io
         policy sequential
         health_check 1m
     }
     fallback REFUSED,SERVFAIL,NXDOMAIN . dns://127.0.0.1:5553
+    {{ else }}
+    forward . {{ if .servers }}{{ join " " .servers }}{{ else if .locals }}{{ join " " .locals }}{{ else }}dns://127.0.0.11:53{{ end }} {
+        except local.hass.io
+        policy sequential
+        health_check 1m
+    }
+    {{ end }}
     cache 600
 }
 
+{{ if .fallback }}
 .:5553 {
     log {{ if not .debug }}{
         class error
@@ -34,3 +43,4 @@
     }
     cache 600
 }
+{{end}}
