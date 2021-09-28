@@ -11,11 +11,12 @@
         rcode NOERROR
     }
     mdns
-    forward . dns://172.0.0.11:53 dns://127.0.0.1:5553 {
+    forward . dns://127.0.0.11:53 {
         except local.hass.io
         policy sequential
         health_check 1m
     }
+    fallback REFUSED,SERVFAIL,NXDOMAIN . dns://127.0.0.1:5553
     cache
 }
 
