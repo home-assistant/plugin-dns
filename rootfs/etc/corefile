@@ -22,8 +22,7 @@
 .:5553 {
     log
     errors
-    forward . tls://1.1.1.1 tls://1.0.0.1 {
-        tls_servername cloudflare-dns.com
+    forward . dns://1.1.1.1 dns://1.0.0.1 {
         except local.hass.io
         health_check 5m
     }
