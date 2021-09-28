@@ -16,7 +16,8 @@
         policy sequential
         health_check 1m
     }
-    cache
+    fallback REFUSED,SERVFAIL,NXDOMAIN . dns://127.0.0.1:5553
+    cache 600
 }
 
 .:5553 {
@@ -27,5 +28,5 @@
         except local.hass.io
         health_check 5m
     }
-    cache
+    cache 600
 }
