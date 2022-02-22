@@ -1,32 +1,37 @@
 package mdns
 
 import (
-	"sync"
-	"time"
-
 	"github.com/coredns/caddy"
 	"github.com/coredns/coredns/core/dnsserver"
 	"github.com/coredns/coredns/plugin"
+	"github.com/coredns/coredns/plugin/mdns/resolve1"
 
-	"github.com/grandcat/zeroconf"
+	"github.com/godbus/dbus/v5"
 )
 
 func init() { plugin.Register("mdns", setup) }
 
 func setup(c *caddy.Controller) error {
-	mdnsHosts := make(map[string]*zeroconf.ServiceEntry)
-	mutex := sync.RWMutex{}
-	m := MDNS{mutex: &mutex, mdnsHosts: &mdnsHosts}
-
 	for c.Next() {
 		if c.NextArg() {
 			return plugin.Error("mdns", c.ArgErr())
 		}
 	}
 
-	c.OnStartup(func() error {
-		go browseLoop(&m)
-		return nil
+	conn, err := dbus.ConnectSystemBus()
+	if err != nil {
+		return plugin.Error("mdns", err)
+	}
+	bus_object := conn.Object("org.freedesktop.resolve1", "/org/freedesktop/resolve1")
+	resolver := resolve1.NewManager(bus_object)
+
+	m := MDNS{
+		Resolver: resolver,
+		Ifc:      GetPrimaryInterface(conn.Context(), resolver),
+	}
+
+	c.OnShutdown(func() error {
+		return conn.Close()
 	})
 
 	dnsserver.GetConfig(c).AddPlugin(func(next plugin.Handler) plugin.Handler {
@@ -35,11 +40,4 @@ func setup(c *caddy.Controller) error {
 	})
 
 	return nil
-}
-
-func browseLoop(m *MDNS) {
-	for {
-		m.BrowseMDNS()
-		time.Sleep(120 * time.Second)
-	}
 }

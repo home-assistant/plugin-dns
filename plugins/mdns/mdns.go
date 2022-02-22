@@ -1,15 +1,15 @@
 package mdns
 
 import (
+	"net"
 	"strings"
-	"sync"
-	"time"
+	"syscall"
 
 	"github.com/coredns/coredns/plugin"
+	"github.com/coredns/coredns/plugin/mdns/resolve1"
 	clog "github.com/coredns/coredns/plugin/pkg/log"
 	"github.com/coredns/coredns/request"
 
-	"github.com/grandcat/zeroconf"
 	"github.com/miekg/dns"
 	"golang.org/x/net/context"
 )
@@ -17,35 +17,58 @@ import (
 var log = clog.NewWithPlugin("mdns")
 
 type MDNS struct {
-	Next      plugin.Handler
-	mutex     *sync.RWMutex
-	mdnsHosts *map[string]*zeroconf.ServiceEntry
+	Next     plugin.Handler
+	Resolver *resolve1.Manager
+	Ifc      int32
 }
 
-func (m MDNS) AddARecord(msg *dns.Msg, state *request.Request, hosts map[string]*zeroconf.ServiceEntry, name string) bool {
+func insertAnAnswer(answers []dns.RR, answer dns.RR, index int) []dns.RR {
+	return append(answers[:index], append([]dns.RR{answer}, answers[index:]...)...)
+}
+
+func (m MDNS) AddARecord(msg *dns.Msg, state *request.Request, name string, addresses []struct {
+	V0 int32
+	V1 int32
+	V2 []byte
+}) bool {
 	// Add A and AAAA record for name (if it exists) to msg.
 	// A records need to be returned in A queries, this function
 	// provides common code for doing so.
-	answerEntry, present := hosts[name]
-	if present {
-		if answerEntry.AddrIPv4 != nil && state.QType() == dns.TypeA {
+
+	resolved := false
+	ifc_index := 0
+	for i := 0; i < len(addresses); i++ {
+		addr := addresses[i]
+		var ip net.IP = addr.V2
+		if addr.V1 == syscall.AF_INET && state.QType() == dns.TypeA {
 			aheader := dns.RR_Header{Name: name, Rrtype: dns.TypeA, Class: dns.ClassINET, Ttl: 60}
-			// TODO: Support multiple addresses
-			msg.Answer = append(msg.Answer, &dns.A{Hdr: aheader, A: answerEntry.AddrIPv4[0]})
-		}
-		if answerEntry.AddrIPv6 != nil && state.QType() == dns.TypeAAAA {
+
+			if ip.Mask(net.CIDRMask(23, 32)).Equal(net.IPv4(172, 30, 32, 0)) {
+				// Prefer an address within hassio network if one is returned by inserting at front
+				msg.Answer = insertAnAnswer(msg.Answer, &dns.A{Hdr: aheader, A: ip}, 0)
+				ifc_index = 1
+
+			} else if addr.V0 == m.Ifc {
+				// Primary interface is next most preferred if we found it
+				msg.Answer = insertAnAnswer(msg.Answer, &dns.A{Hdr: aheader, A: ip}, ifc_index)
+
+			} else {
+				msg.Answer = append(msg.Answer, &dns.A{Hdr: aheader, A: ip})
+			}
+			resolved = true
+
+		} else if addr.V1 == syscall.AF_INET6 && state.QType() == dns.TypeAAAA {
 			aaaaheader := dns.RR_Header{Name: name, Rrtype: dns.TypeAAAA, Class: dns.ClassINET, Ttl: 60}
-			msg.Answer = append(msg.Answer, &dns.AAAA{Hdr: aaaaheader, AAAA: answerEntry.AddrIPv6[0]})
+			msg.Answer = append(msg.Answer, &dns.AAAA{Hdr: aaaaheader, AAAA: ip})
+			resolved = true
 		}
-		return true
 	}
-	return false
+	return resolved
 }
 
 func (m MDNS) ServeDNS(ctx context.Context, w dns.ResponseWriter, r *dns.Msg) (int, error) {
 	msg := new(dns.Msg)
 	state := request.Request{W: w, Req: r}
-	mdnsHosts := *m.mdnsHosts
 	hostName := strings.ToLower(state.QName())
 
 	// Prepare message
@@ -54,7 +77,7 @@ func (m MDNS) ServeDNS(ctx context.Context, w dns.ResponseWriter, r *dns.Msg) (i
 	msg.RecursionAvailable = true
 
 	// Check requirements
-	if !strings.HasSuffix(state.QName(), ".local.") {
+	if !(strings.HasSuffix(state.QName(), ".local.") || len(strings.Split(state.QName(), ".")) == 2) {
 		return plugin.NextOrFailure(m.Name(), m.Next, ctx, w, r)
 	}
 
@@ -63,11 +86,14 @@ func (m MDNS) ServeDNS(ctx context.Context, w dns.ResponseWriter, r *dns.Msg) (i
 	}
 
 	msg.Answer = []dns.RR{}
+	addresses, _, _, err := m.Resolver.ResolveHostname(ctx, 0, hostName, syscall.AF_UNSPEC, 0)
 
-	m.mutex.RLock()
-	defer m.mutex.RUnlock()
+	if err != nil {
+		// Usually the error will say that it couldn't find a host with that name
+		// There may be uncommon errors though so not swallowing it while debugging
+		log.Debug(err)
 
-	if m.AddARecord(msg, &state, mdnsHosts, hostName) {
+	} else if m.AddARecord(msg, &state, hostName, addresses) {
 		log.Debug(msg)
 		w.WriteMsg(msg)
 		return dns.RcodeSuccess, nil
@@ -77,84 +103,18 @@ func (m MDNS) ServeDNS(ctx context.Context, w dns.ResponseWriter, r *dns.Msg) (i
 	return plugin.NextOrFailure(m.Name(), m.Next, ctx, w, r)
 }
 
-func (m *MDNS) BrowseMDNS() {
-	entriesSrv := make(chan *zeroconf.ServiceEntry)
-	mdnsHosts := make(map[string]*zeroconf.ServiceEntry)
-	discovery := []string{}
+func GetPrimaryInterface(ctx context.Context, resolver *resolve1.Manager) int32 {
+	names, _, err := resolver.ResolveAddress(ctx, 0, syscall.AF_INET, []byte{8, 8, 8, 8}, 0)
 
-	// Retrieve Services
-	go func(results <-chan *zeroconf.ServiceEntry) {
-		log.Debug("Retrieving mDNS services")
-		for entry := range results {
-			serviceName := strings.TrimSuffix(entry.Instance, ".local")
-			log.Debugf("Service: %s\n", serviceName)
-			discovery = append(discovery, serviceName)
-		}
-	}(entriesSrv)
-
-	// Get all available services
-	queryService("_services._dns-sd._udp", entriesSrv, 10)
-
-	// Discover hosts
-	for _, serviceName := range discovery {
-		processService(serviceName, mdnsHosts)
-
-		// Update fast the list to get soon a answer
-		for k, v := range mdnsHosts {
-			if _, found := (*m.mdnsHosts)[k]; !found {
-				(*m.mdnsHosts)[k] = v
-			}
-		}
-	}
-
-	m.mutex.Lock()
-	defer m.mutex.Unlock()
-	// Clear maps so we don't have stale entries
-	for k := range *m.mdnsHosts {
-		delete(*m.mdnsHosts, k)
-	}
-	// Copy values into the shared maps only after we've collected all of them.
-	// This prevents us from having to lock during the entire mdns browse time.
-	for k, v := range mdnsHosts {
-		(*m.mdnsHosts)[k] = v
-	}
-}
-
-func processService(service string, mdnsHosts map[string]*zeroconf.ServiceEntry) {
-	entriesHost := make(chan *zeroconf.ServiceEntry)
-
-	// Retrieve Hosts
-	go func(results <-chan *zeroconf.ServiceEntry) {
-		log.Debug("Retrieving mDNS entries")
-		for entry := range results {
-			// Make a copy of the entry so zeroconf can't later overwrite our changes
-			localEntry := *entry
-			if localEntry.HostName != "" {
-				log.Debugf("Instance: %s, HostName: %s, AddrIPv4: %s, AddrIPv6: %s\n", localEntry.Instance, localEntry.HostName, localEntry.AddrIPv4, localEntry.AddrIPv6)
-				mdnsHosts[strings.ToLower(localEntry.HostName)] = entry
-			} else {
-				log.Debugf("Ignore Instance: %v", localEntry)
-			}
-		}
-	}(entriesHost)
-
-	queryService(service, entriesHost, 8)
-}
-
-func queryService(service string, channel chan *zeroconf.ServiceEntry, timeout int) {
-	resolver, err := zeroconf.NewResolver(nil)
 	if err != nil {
-		log.Errorf("Failed to initialize %s resolver: %s", service, err.Error())
-		return
+		log.Error("could not locate primary interface due to: ", err)
+		return 0
 	}
-	ctx, cancel := context.WithTimeout(context.Background(), time.Duration(timeout) * time.Second)
-	defer cancel()
-	err = resolver.Browse(ctx, service, "local.", channel)
-	if err != nil {
-		log.Errorf("Failed to browse %s records: %s", service, err.Error())
-		return
+	if len(names) == 0 {
+		log.Error("could not locate primary interface, possible network issue")
+		return 0
 	}
-	<-ctx.Done()
+	return names[0].V0
 }
 
 func (m MDNS) Name() string { return "mdns" }
