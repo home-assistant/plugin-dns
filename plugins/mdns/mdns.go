@@ -67,6 +67,10 @@ func (m MDNS) AddARecord(msg *dns.Msg, state *request.Request, name string, addr
 }
 
 func (m MDNS) ServeDNS(ctx context.Context, w dns.ResponseWriter, r *dns.Msg) (int, error) {
+	if m.Resolver == nil {
+		return plugin.NextOrFailure(m.Name(), m.Next, ctx, w, r)
+	}
+
 	msg := new(dns.Msg)
 	state := request.Request{W: w, Req: r}
 	hostName := strings.ToLower(state.QName())

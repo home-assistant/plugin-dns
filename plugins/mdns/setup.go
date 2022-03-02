@@ -18,21 +18,29 @@ func setup(c *caddy.Controller) error {
 		}
 	}
 
+	var m MDNS
 	conn, err := dbus.ConnectSystemBus()
 	if err != nil {
-		return plugin.Error("mdns", err)
-	}
-	bus_object := conn.Object("org.freedesktop.resolve1", "/org/freedesktop/resolve1")
-	resolver := resolve1.NewManager(bus_object)
+		log.Error("could not connect to systemd resolver due to %s", err)
+		log.Error("mdns and llmnr urls will not resolve in without this")
 
-	m := MDNS{
-		Resolver: resolver,
-		Ifc:      GetPrimaryInterface(conn.Context(), resolver),
-	}
+		m = MDNS{
+			Resolver: nil,
+			Ifc: 0,
+		}
+	} else {
+		bus_object := conn.Object("org.freedesktop.resolve1", "/org/freedesktop/resolve1")
+		resolver := resolve1.NewManager(bus_object)
 
-	c.OnShutdown(func() error {
-		return conn.Close()
-	})
+		m = MDNS{
+			Resolver: resolver,
+			Ifc:      GetPrimaryInterface(conn.Context(), resolver),
+		}
+
+		c.OnShutdown(func() error {
+			return conn.Close()
+		})
+	}
 
 	dnsserver.GetConfig(c).AddPlugin(func(next plugin.Handler) plugin.Handler {
 		m.Next = next
