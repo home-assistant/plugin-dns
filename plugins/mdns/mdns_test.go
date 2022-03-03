@@ -91,6 +91,8 @@ func TestAddARecord(t *testing.T) {
 			"myservice.local	60	IN	A	192.168.1.1",
 			"myservice.local	60	IN	A	10.1.1.1",
 		}, true},
+		{"success on AAAA if only A found", "mymachine.local", dns.TypeAAAA, nilResponseWriter{}, 1, ipv4, []string{}, true},
+		{"success on A if only AAAA found", "mymachine.local", dns.TypeA, nilResponseWriter{}, 1, ipv6, []string{}, true},
 	}
 	for _, tc := range testCases {
 		m := MDNS{nil, nil, tc.ifc}

@@ -21,12 +21,12 @@ func setup(c *caddy.Controller) error {
 	var m MDNS
 	conn, err := dbus.ConnectSystemBus()
 	if err != nil {
-		log.Error("could not connect to systemd resolver due to %s", err)
+		log.Error("could not connect to systemd resolver due to: ", err)
 		log.Error("mdns and llmnr urls will not resolve in without this")
 
 		m = MDNS{
 			Resolver: nil,
-			Ifc: 0,
+			Ifc:      0,
 		}
 	} else {
 		bus_object := conn.Object("org.freedesktop.resolve1", "/org/freedesktop/resolve1")
