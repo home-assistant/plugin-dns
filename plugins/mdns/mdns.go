@@ -34,8 +34,12 @@ func (m MDNS) AddARecord(msg *dns.Msg, state *request.Request, name string, addr
 	// Add A and AAAA record for name (if it exists) to msg.
 	// A records need to be returned in A queries, this function
 	// provides common code for doing so.
+	// Success is always returned if any answers found, even if they don't match question type
+	// A noerror on A and nxdomain on AAAA (or vice versa) breaks some clients (musl)
+	if len(addresses) == 0 {
+		return false
+	}
 
-	resolved := false
 	ifc_index := 0
 	for i := 0; i < len(addresses); i++ {
 		addr := addresses[i]
@@ -55,15 +59,13 @@ func (m MDNS) AddARecord(msg *dns.Msg, state *request.Request, name string, addr
 			} else {
 				msg.Answer = append(msg.Answer, &dns.A{Hdr: aheader, A: ip})
 			}
-			resolved = true
 
 		} else if addr.V1 == syscall.AF_INET6 && state.QType() == dns.TypeAAAA {
 			aaaaheader := dns.RR_Header{Name: name, Rrtype: dns.TypeAAAA, Class: dns.ClassINET, Ttl: 60}
 			msg.Answer = append(msg.Answer, &dns.AAAA{Hdr: aaaaheader, AAAA: ip})
-			resolved = true
 		}
 	}
-	return resolved
+	return true
 }
 
 func (m MDNS) ServeDNS(ctx context.Context, w dns.ResponseWriter, r *dns.Msg) (int, error) {
