@@ -12,10 +12,11 @@
         rcode NOERROR
     }
     mdns
-    forward . {{ join " " .servers }} {{ if len .locals | eq 0 }}dns://127.0.0.11{{ else }}{{ join " " .locals }}{{ end }} dns://127.0.0.1:5553 {
+    forward . {{ join " " .servers }} {{ if len .locals | eq 0 }}dns://127.0.0.11{{ else }}{{ join " " .locals }}{{ end }} {
         except local.hass.io
         policy sequential
         health_check 1m
+        max_fails 5
     }
     fallback REFUSED,SERVFAIL,NXDOMAIN . dns://127.0.0.1:5553
     cache 600
@@ -29,8 +30,8 @@
     {{ if .debug }}debug{{ end }}
     forward . tls://1.1.1.1 tls://1.0.0.1 {
         tls_servername cloudflare-dns.com
+        max_fails 0
         except local.hass.io
-        health_check 5m
     }
     cache 600
 }
