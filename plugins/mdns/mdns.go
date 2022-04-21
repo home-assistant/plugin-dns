@@ -100,16 +100,16 @@ func (m MDNS) ServeDNS(ctx context.Context, w dns.ResponseWriter, r *dns.Msg) (i
 		// There may be uncommon errors though so not swallowing it while debugging
 		log.Debug(err)
 
-	} else if m.AddARecord(msg, &state, hostName, addresses) {
+	} else {
+		m.AddARecord(msg, &state, hostName, addresses)
 		log.Debug(msg)
-		w.WriteMsg(msg)
-		return dns.RcodeSuccess, nil
 	}
 
 	// Plugin only processes A and AAAA type multicast queries (.local or single name)
-	// Do not forward those to external resolvers. If we don't have an answer no one does
-	log.Debugf("No records found for '%s', returning NXDOMAIN.", state.QName())
-	return dns.RcodeNameError, nil
+	// Whether an answer was found or not this is end of the line, do not forward to external resolvers
+	// Always return NOERROR since we are not authoritative for this domain
+	w.WriteMsg(msg)
+	return dns.RcodeSuccess, nil
 }
 
 func GetPrimaryInterface(ctx context.Context, resolver *resolve1.Manager) int32 {
