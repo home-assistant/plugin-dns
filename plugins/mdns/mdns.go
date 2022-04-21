@@ -69,6 +69,7 @@ func (m MDNS) AddARecord(msg *dns.Msg, state *request.Request, name string, addr
 }
 
 func (m MDNS) ServeDNS(ctx context.Context, w dns.ResponseWriter, r *dns.Msg) (int, error) {
+	// If systemd-resolved isn't available, plugin can't do anything. Pass to the next one.
 	if m.Resolver == nil {
 		return plugin.NextOrFailure(m.Name(), m.Next, ctx, w, r)
 	}
@@ -105,8 +106,10 @@ func (m MDNS) ServeDNS(ctx context.Context, w dns.ResponseWriter, r *dns.Msg) (i
 		return dns.RcodeSuccess, nil
 	}
 
-	log.Debugf("No records found for '%s', forwarding to next plugin.", state.QName())
-	return plugin.NextOrFailure(m.Name(), m.Next, ctx, w, r)
+	// Plugin only processes A and AAAA type multicast queries (.local or single name)
+	// Do not forward those to external resolvers. If we don't have an answer no one does
+	log.Debugf("No records found for '%s', returning NXDOMAIN.", state.QName())
+	return dns.RcodeNameError, nil
 }
 
 func GetPrimaryInterface(ctx context.Context, resolver *resolve1.Manager) int32 {

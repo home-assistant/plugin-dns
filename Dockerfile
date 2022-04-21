@@ -17,6 +17,8 @@ RUN \
     && git clone --depth 1 -b v${COREDNS_VERSION} https://github.com/coredns/coredns \
     && cp -rf plugins/* coredns/plugin/ \
     && cd coredns \
+    && sed -i "/^template:template/d" plugin.cfg \
+    && sed -i "/^hosts:.*/i template:template" plugin.cfg \
     && sed -i "/^forward:.*/i fallback:fallback" plugin.cfg \
     && sed -i "/^hosts:.*/a mdns:mdns" plugin.cfg \
     && sed -i "/route53:route53/d" plugin.cfg \
