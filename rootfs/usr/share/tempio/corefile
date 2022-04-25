@@ -21,7 +21,7 @@
         health_check 1m
         max_fails 5
     }
-    fallback REFUSED,SERVFAIL,NXDOMAIN . dns://127.0.0.1:5553
+    {{ if .fallback }}fallback REFUSED,SERVFAIL,NXDOMAIN . dns://127.0.0.1:5553{{ end }}
     cache 600
 }
 
