@@ -11,6 +11,9 @@
     template ANY AAAA local.hass.io hassio {
         rcode NOERROR
     }
+    template ANY A local.hass.io hassio {
+        rcode NXDOMAIN
+    }
     mdns
     forward . {{ join " " .servers }} {{ if len .locals | eq 0 }}dns://127.0.0.11{{ else }}{{ join " " .locals }}{{ end }} {
         except local.hass.io
