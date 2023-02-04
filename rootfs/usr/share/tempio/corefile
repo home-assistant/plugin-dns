@@ -31,6 +31,10 @@
     }{{ end }}
     errors
     {{ if .debug }}debug{{ end }}
+    # The fallback server should not process health-check messages.
+    template IN NS . {
+        rcode REFUSED
+    }
     forward . tls://1.1.1.1 tls://1.0.0.1 {
         tls_servername cloudflare-dns.com
         max_fails 0
