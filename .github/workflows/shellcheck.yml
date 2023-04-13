@@ -15,7 +15,7 @@ jobs:
     name: ShellCheck
     steps:
       - name: Check out the repository
-        uses: actions/checkout@v3.5.0
+        uses: actions/checkout@v3.5.2
 
       - name: Run linter
         uses: ludeeus/action-shellcheck@2.0.0
