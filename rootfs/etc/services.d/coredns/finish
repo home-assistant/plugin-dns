@@ -1,4 +1,4 @@
-#!/usr/bin/execlineb -S1
+#!/usr/bin/env bashio
 # ==============================================================================
 # Take down the S6 supervision tree when CoreDNS fails
 # s6-overlay docs: https://github.com/just-containers/s6-overlay
