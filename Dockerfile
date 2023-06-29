@@ -1,7 +1,6 @@
 ARG BUILD_FROM
-ARG TARGETPLATFORM
 
-FROM --platform=${TARGETPLATFORM} golang:1.15-alpine3.13 AS builder
+FROM --platform=amd64 golang:1.15-alpine3.13 AS builder
 
 WORKDIR /usr/src
 ARG BUILD_ARCH
