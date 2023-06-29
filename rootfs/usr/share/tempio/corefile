@@ -11,6 +11,9 @@
     template ANY AAAA local.hass.io hassio {
         rcode NOERROR
     }
+    template ANY A local.hass.io hassio {
+        rcode NXDOMAIN
+    }
     mdns
     forward . {{ join " " .servers }} {{ if len .locals | eq 0 }}dns://127.0.0.11{{ else }}{{ join " " .locals }}{{ end }} {
         except local.hass.io
@@ -18,7 +21,7 @@
         health_check 1m
         max_fails 5
     }
-    fallback REFUSED,SERVFAIL,NXDOMAIN . dns://127.0.0.1:5553
+    {{ if .fallback }}fallback REFUSED,SERVFAIL,NXDOMAIN . dns://127.0.0.1:5553{{ end }}
     cache 600
 }
 
