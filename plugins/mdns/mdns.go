@@ -1,6 +1,7 @@
 package mdns
 
 import (
+	"context"
 	"net"
 	"strings"
 	"syscall"
@@ -11,7 +12,6 @@ import (
 	"github.com/coredns/coredns/request"
 
 	"github.com/miekg/dns"
-	"golang.org/x/net/context"
 )
 
 var log = clog.NewWithPlugin("mdns")

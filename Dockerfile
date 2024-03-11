@@ -1,6 +1,6 @@
 ARG BUILD_FROM
 
-FROM --platform=amd64 golang:1.15-alpine3.13 AS builder
+FROM --platform=amd64 golang:1.22-alpine3.19 AS builder
 
 WORKDIR /usr/src
 ARG BUILD_ARCH
@@ -27,6 +27,7 @@ RUN \
     && sed -i "/kubernetes:kubernetes/d" plugin.cfg \
     && sed -i "/etcd:etcd/d" plugin.cfg \
     && sed -i "/grpc:grpc/d" plugin.cfg \
+    && go mod tidy \
     && go generate \
     && \
         if [ "${BUILD_ARCH}" = "armhf" ]; then \
