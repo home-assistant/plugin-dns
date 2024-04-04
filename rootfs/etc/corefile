@@ -10,22 +10,34 @@
     template ANY AAAA local.hass.io hassio {
         rcode NOERROR
     }
+    template ANY A local.hass.io hassio {
+        rcode NXDOMAIN
+    }
     mdns
-    forward . dns://172.0.0.11:53 dns://127.0.0.1:5553 {
+    forward . dns://127.0.0.11 {
         except local.hass.io
         policy sequential
         health_check 1m
+        max_fails 5
     }
+    fallback REFUSED,SERVFAIL,NXDOMAIN . dns://127.0.0.1:5553
     cache
 }
 
 .:5553 {
     log
     errors
+    template IN NS . {
+        rcode REFUSED
+    }
+    template IN HINFO . {
+        rcode REFUSED
+    }
     forward . tls://1.1.1.1 tls://1.0.0.1 {
         tls_servername cloudflare-dns.com
+        max_fails 2
         except local.hass.io
-        health_check 5m
+        health_check 10m
     }
-    cache
+    cache 600
 }

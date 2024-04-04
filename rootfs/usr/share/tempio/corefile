@@ -30,11 +30,18 @@
         class error
     }{{ end }}
     errors
+    template IN NS . {
+        rcode REFUSED
+    }
+    template IN HINFO . {
+        rcode REFUSED
+    }
     {{ if .debug }}debug{{ end }}
     forward . tls://1.1.1.1 tls://1.0.0.1 {
         tls_servername cloudflare-dns.com
-        max_fails 0
+        max_fails 2
         except local.hass.io
+        health_check 10m
     }
     cache 600
 }
