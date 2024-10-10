@@ -1,10 +1,10 @@
 image: ghcr.io/home-assistant/{arch}-hassio-dns
 build_from:
-  aarch64: ghcr.io/home-assistant/aarch64-base:3.19
-  armhf: ghcr.io/home-assistant/armhf-base:3.19
-  armv7: ghcr.io/home-assistant/armv7-base:3.19
-  amd64: ghcr.io/home-assistant/amd64-base:3.19
-  i386: ghcr.io/home-assistant/i386-base:3.19
+  aarch64: ghcr.io/home-assistant/aarch64-base:3.20
+  armhf: ghcr.io/home-assistant/armhf-base:3.20
+  armv7: ghcr.io/home-assistant/armv7-base:3.20
+  amd64: ghcr.io/home-assistant/amd64-base:3.20
+  i386: ghcr.io/home-assistant/i386-base:3.20
 codenotary:
   signer: notary@home-assistant.io
   base_image: notary@home-assistant.io
@@ -21,4 +21,4 @@ labels:
   org.opencontainers.image.documentation: https://www.home-assistant.io/docs/
   org.opencontainers.image.licenses: Apache License 2.0
 args:
-  COREDNS_VERSION: 1.8.7
+  COREDNS_VERSION: 1.11.3
