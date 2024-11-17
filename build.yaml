@@ -21,4 +21,4 @@ labels:
   org.opencontainers.image.documentation: https://www.home-assistant.io/docs/
   org.opencontainers.image.licenses: Apache License 2.0
 args:
-  COREDNS_VERSION: 1.11.3
+  COREDNS_VERSION: 1.11.4
