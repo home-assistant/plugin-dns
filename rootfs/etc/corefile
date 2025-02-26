@@ -39,5 +39,5 @@
         except local.hass.io
         health_check 10m
     }
-    cache 600
+    cache
 }
