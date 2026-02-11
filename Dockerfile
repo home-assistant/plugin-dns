@@ -1,6 +1,6 @@
 ARG BUILD_FROM
 
-FROM golang:1.23.3-alpine3.20 AS builder
+FROM golang:1.25.7-alpine3.23 AS builder
 
 WORKDIR /usr/src
 ARG BUILD_ARCH
