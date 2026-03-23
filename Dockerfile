@@ -1,10 +1,10 @@
-ARG BUILD_FROM
+ARG BUILD_FROM=ghcr.io/home-assistant/base:3.23-2026.03.1
 
 FROM golang:1.25.7-alpine3.23 AS builder
 
 WORKDIR /usr/src
-ARG BUILD_ARCH
-ARG COREDNS_VERSION
+ARG TARGETARCH
+ARG COREDNS_VERSION="1.11.4"
 
 # Build CoreDNS
 COPY plugins plugins
@@ -29,17 +29,26 @@ RUN \
     && sed -i "/grpc:grpc/d" plugin.cfg \
     && go mod tidy \
     && go generate \
-    && \
-        if [ "${BUILD_ARCH}" = "aarch64" ]; then \
-            make coredns SYSTEM="CGO_ENABLED=0 GOOS=linux GOARCH=arm64"; \
-        elif [ "${BUILD_ARCH}" = "amd64" ]; then \
-            make coredns SYSTEM="CGO_ENABLED=0 GOOS=linux GOARCH=amd64"; \
-        else \
-            exit 1; \
-        fi
+    && if [ -z "${TARGETARCH}" ]; then \
+            echo "TARGETARCH is not set, please use Docker BuildKit for the build." && exit 1; \
+        fi \
+    && case "${TARGETARCH}" in \
+            amd64|arm64) ;; \
+            *) echo "Unsupported TARGETARCH: ${TARGETARCH}" && exit 1 ;; \
+        esac \
+    && make coredns SYSTEM="CGO_ENABLED=0 GOOS=linux GOARCH=${TARGETARCH}"
 
 FROM ${BUILD_FROM}
 
 WORKDIR /config
 COPY --from=builder /usr/src/coredns/coredns /usr/bin/coredns
 COPY rootfs /
+
+LABEL \
+    io.hass.type="dns" \
+    org.opencontainers.image.title="Home Assistant DNS Plugin" \
+    org.opencontainers.image.description="Home Assistant Supervisor plugin for DNS" \
+    org.opencontainers.image.authors="The Home Assistant Authors" \
+    org.opencontainers.image.url="https://www.home-assistant.io/" \
+    org.opencontainers.image.documentation="https://www.home-assistant.io/docs/" \
+    org.opencontainers.image.licenses="Apache License 2.0"
