@@ -1,5 +1,3 @@
-ARG BUILD_FROM=ghcr.io/home-assistant/base:3.23-2026.03.1
-
 FROM golang:1.25.7-alpine3.23 AS builder
 
 WORKDIR /usr/src
@@ -38,7 +36,8 @@ RUN \
         esac \
     && make coredns SYSTEM="CGO_ENABLED=0 GOOS=linux GOARCH=${TARGETARCH}"
 
-FROM ${BUILD_FROM}
+# Base image updated by Renovate, update versionCompatibility on Alpine base bump
+FROM ghcr.io/home-assistant/base:3.23-2026.03.1@sha256:c20ba24722be474428ceee385860c3c17acc48630eb0a6b26cbeb7005406058f
 
 WORKDIR /config
 COPY --from=builder /usr/src/coredns/coredns /usr/bin/coredns
