@@ -39,6 +39,11 @@ RUN \
 # Base image updated by Renovate, update versionCompatibility on Alpine base bump
 FROM ghcr.io/home-assistant/base:3.24-2026.06.1@sha256:94ff231402a5e7ad2a82e261ad5fa4ffae7d7bb095c3febb2edbdf309c9b6aca
 
+# Everything in this image runs s6-supervised: skip the blind
+# SIGTERM-to-SIGKILL grace sleep at shutdown (guarded by
+# /etc/cont-finish.d/stray-check.sh).
+ENV S6_KILL_GRACETIME=0
+
 WORKDIR /config
 COPY --from=builder /usr/src/coredns/coredns /usr/bin/coredns
 COPY rootfs /
