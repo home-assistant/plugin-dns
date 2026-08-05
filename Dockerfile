@@ -6,6 +6,7 @@ ARG COREDNS_VERSION="1.11.4"
 
 # Build CoreDNS
 COPY plugins plugins
+COPY patches patches
 RUN \
     set -x \
     && apk add --no-cache \
@@ -15,6 +16,7 @@ RUN \
     && git clone --depth 1 -b v${COREDNS_VERSION} https://github.com/coredns/coredns \
     && cp -rf plugins/* coredns/plugin/ \
     && cd coredns \
+    && git apply --verbose ../patches/*.patch \
     && sed -i "/^template:template/d" plugin.cfg \
     && sed -i "/^hosts:.*/a template:template" plugin.cfg \
     && sed -i "/^forward:.*/i fallback:fallback" plugin.cfg \

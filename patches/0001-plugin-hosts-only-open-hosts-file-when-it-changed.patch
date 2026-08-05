@@ -1,0 +1,53 @@
+plugin/hosts: only open hosts file when it changed
+
+readHosts() opens and closes the hosts file on every reload tick just
+to read its metadata. Stat the path first and open the file only when
+mtime/size actually changed, so the steady-state cost of a short
+reload interval is a single stat call without fd churn.
+
+Backport of upstream https://github.com/coredns/coredns/pull/8407
+rebased onto CoreDNS v1.11.4.
+
+diff --git a/plugin/hosts/hostsfile.go b/plugin/hosts/hostsfile.go
+index 04747ef8..6270e7f1 100644
+--- a/plugin/hosts/hostsfile.go
++++ b/plugin/hosts/hostsfile.go
+@@ -109,22 +109,31 @@ type Hostsfile struct {
+ 
+ // readHosts determines if the cached data needs to be updated based on the size and modification time of the hostsfile.
+ func (h *Hostsfile) readHosts() {
+-	file, err := os.Open(h.path)
++	// Only stat the file to check for changes; the file is opened for parsing
++	// only when it actually changed.
++	pstat, err := os.Stat(h.path)
+ 	if err != nil {
+ 		// We already log a warning if the file doesn't exist or can't be opened on setup. No need to return the error here.
+ 		return
+ 	}
+-	defer file.Close()
++	h.RLock()
++	size := h.size
++	h.RUnlock()
+ 
+-	stat, err := file.Stat()
++	if h.mtime.Equal(pstat.ModTime()) && size == pstat.Size() {
++		return
++	}
++
++	file, err := os.Open(h.path)
+ 	if err != nil {
+ 		return
+ 	}
+-	h.RLock()
+-	size := h.size
+-	h.RUnlock()
++	defer file.Close()
+ 
+-	if h.mtime.Equal(stat.ModTime()) && size == stat.Size() {
++	// Stat the opened file so the recorded mtime/size always match the content
++	// that was parsed, even if the file is replaced between the stat and open.
++	stat, err := file.Stat()
++	if err != nil {
+ 		return
+ 	}
+ 

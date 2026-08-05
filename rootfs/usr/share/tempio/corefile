@@ -6,6 +6,7 @@
     loop
     {{ if .debug }}debug{{ end }}
     hosts /config/hosts {
+        reload 250ms
         fallthrough
     }
     template ANY AAAA local.hass.io hassio {
