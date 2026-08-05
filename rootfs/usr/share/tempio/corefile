@@ -22,7 +22,9 @@
         max_fails 5
     }
     {{ if .fallback }}fallback REFUSED,SERVFAIL,NXDOMAIN . dns://127.0.0.1:5553{{ end }}
-    cache
+    cache {
+        disable denial local.hass.io
+    }
 }
 
 .:5553 {
