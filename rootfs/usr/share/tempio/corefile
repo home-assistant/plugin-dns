@@ -7,6 +7,7 @@
     {{ if .debug }}debug{{ end }}
     hosts /config/hosts {
         reload 250ms
+        ttl 60
         fallthrough
     }
     template ANY AAAA local.hass.io hassio {
@@ -24,6 +25,7 @@
     }
     {{ if .fallback }}fallback REFUSED,SERVFAIL,NXDOMAIN . dns://127.0.0.1:5553{{ end }}
     cache {
+        disable success local.hass.io
         disable denial local.hass.io
     }
 }
