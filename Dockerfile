@@ -2,7 +2,7 @@ FROM golang:1.26.5-alpine3.24 AS builder
 
 WORKDIR /usr/src
 ARG TARGETARCH
-ARG COREDNS_VERSION="1.11.4"
+ARG COREDNS_VERSION="1.14.7"
 
 # Build CoreDNS
 COPY plugins plugins
@@ -27,6 +27,8 @@ RUN \
     && sed -i "/kubernetes:kubernetes/d" plugin.cfg \
     && sed -i "/etcd:etcd/d" plugin.cfg \
     && sed -i "/grpc:grpc/d" plugin.cfg \
+    && sed -i "/nomad:nomad/d" plugin.cfg \
+    && sed -i "/trace:trace/d" plugin.cfg \
     && go mod tidy \
     && go generate \
     && if [ -z "${TARGETARCH}" ]; then \
